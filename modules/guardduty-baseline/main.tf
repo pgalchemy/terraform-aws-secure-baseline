@@ -29,3 +29,7 @@ resource "aws_guardduty_invite_accepter" "master" {
   detector_id       = aws_guardduty_detector.default[0].id
   master_account_id = var.master_account_id
 }
+
+resource "aws_guardduty_organization_admin_account" "security_account" {
+  admin_account_id = var.security_account_id
+}

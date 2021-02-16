@@ -26,3 +26,9 @@ variable "member_accounts" {
   }))
   default = []
 }
+
+variable "security_account_id" {
+  type        = string
+  description = "The delegated AWS account for securityhub"
+  default     = "466338271798" # Default value is CATALYST-AWS-SECURITY-PROD
+}

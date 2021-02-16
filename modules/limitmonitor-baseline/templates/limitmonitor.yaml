@@ -1,0 +1,806 @@
+{
+  "Description": "(SO0005) - limit-monitor, version v5.3.3 - Spoke Template for vCPU limits",
+  "Parameters": {
+    "MasterAccount": {
+      "Type": "String",
+      "AllowedPattern": "^\\d{12}$",
+      "Description": "Account Id for the master account, eg. 111111111111"
+    }
+  },
+  "Mappings": {
+    "MetricsMap": {
+      "Send-Data": {
+        "SendAnonymousData": "Yes"
+      }
+    },
+    "RefreshRate": {
+      "CronSchedule": {
+        "Default": "rate(1 day)"
+      }
+    },
+    "EventsMap": {
+      "Checks": {
+        "Services": "\"AutoScaling\",\"CloudFormation\",\"DynamoDB\",\"EBS\",\"EC2\",\"ELB\",\"IAM\",\"Kinesis\",\"RDS\",\"Route53\",\"SES\",\"VPC\""
+      }
+    }
+  },
+  "Resources": {
+    "TAOkRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Limit Monitor Solution - Spoke - Rule for TA OK events",
+        "EventPattern": {
+          "Fn::Join": [
+              "",
+            [
+                "{\"account\":[\"",
+              {
+                "Ref": "AWS::AccountId"
+              },
+                "\"],",
+                "\"source\":[\"aws.trustedadvisor\", \"limit-monitor-solution\"],",
+                "\"detail-type\":[\"Trusted Advisor Check Item Refresh Notification\", \"Limit Monitor Checks\"],",
+                "\"detail\":{",
+                "\"status\":[",
+                "\"OK\"",
+                "],",
+                "\"check-item-detail\":{",
+                "\"Service\":[",
+              {
+                "Fn::FindInMap": [
+                    "EventsMap",
+                    "Checks",
+                    "Services"
+                ]
+              },
+                "]",
+                "}",
+                "}",
+                "}"
+            ]
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::Join": [
+                  "",
+                [
+                    "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                    ":events:us-east-1:",
+                  {
+                    "Ref": "MasterAccount"
+                  },
+                    ":event-bus/default"
+                ]
+              ]
+            },
+            "Id": "SpokeOkTarget"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/TAOkRule/Resource"
+      }
+    },
+    "TAWarnRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Limit Monitor Solution - Spoke - Rule for TA WARN events",
+        "EventPattern": {
+          "Fn::Join": [
+              "",
+            [
+                "{\"account\":[\"",
+              {
+                "Ref": "AWS::AccountId"
+              },
+                "\"],",
+                "\"source\":[\"aws.trustedadvisor\", \"limit-monitor-solution\"],",
+                "\"detail-type\":[\"Trusted Advisor Check Item Refresh Notification\", \"Limit Monitor Checks\"],",
+                "\"detail\":{",
+                "\"status\":[",
+                "\"WARN\"",
+                "],",
+                "\"check-item-detail\":{",
+                "\"Service\":[",
+              {
+                "Fn::FindInMap": [
+                    "EventsMap",
+                    "Checks",
+                    "Services"
+                ]
+              },
+                "]",
+                "}",
+                "}",
+                "}"
+            ]
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::Join": [
+                  "",
+                [
+                    "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                    ":events:us-east-1:",
+                  {
+                    "Ref": "MasterAccount"
+                  },
+                    ":event-bus/default"
+                ]
+              ]
+            },
+            "Id": "SpokeWarnTarget"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/TAWarnRule/Resource"
+      }
+    },
+    "TASErrorRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Limit Monitor Solution - Spoke - Rule for TA ERROR events",
+        "EventPattern": {
+          "Fn::Join": [
+              "",
+            [
+                "{\"account\":[\"",
+              {
+                "Ref": "AWS::AccountId"
+              },
+                "\"],",
+                "\"source\":[\"aws.trustedadvisor\", \"limit-monitor-solution\"],",
+                "\"detail-type\":[\"Trusted Advisor Check Item Refresh Notification\", \"Limit Monitor Checks\"],",
+                "\"detail\":{",
+                "\"status\":[",
+                "\"ERROR\"",
+                "],",
+                "\"check-item-detail\":{",
+                "\"Service\":[",
+              {
+                "Fn::FindInMap": [
+                    "EventsMap",
+                    "Checks",
+                    "Services"
+                ]
+              },
+                "]",
+                "}",
+                "}",
+                "}"
+            ]
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::Join": [
+                  "",
+                [
+                    "arn:",
+                  {
+                    "Ref": "AWS::Partition"
+                  },
+                    ":events:us-east-1:",
+                  {
+                    "Ref": "MasterAccount"
+                  },
+                    ":event-bus/default"
+                ]
+              ]
+            },
+            "Id": "SpokeErrorTarget"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/TASErrorRule/Resource"
+      }
+    },
+    "TARefreshScheduleLambdaFunctionServiceRole88DF7FDF": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                      "logs:CreateLogGroup",
+                      "logs:CreateLogStream",
+                      "logs:PutLogEvents"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                        "",
+                      [
+                          "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                          ":logs:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                          ":",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                          ":log-group:/aws/lambda/*"
+                      ]
+                    ]
+                  }
+                }
+              ],
+              "Version": "2012-10-17"
+            },
+            "PolicyName": "LambdaFunctionServiceRolePolicy"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/TARefreshSchedule/LambdaFunctionServiceRole/Resource"
+      }
+    },
+    "TARefreshScheduleLambdaFunctionServiceRoleDefaultPolicyB0015D14": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                  "xray:PutTraceSegments",
+                  "xray:PutTelemetryRecords"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            },
+            {
+              "Action": [
+                  "logs:CreateLogGroup",
+                  "logs:CreateLogStream",
+                  "logs:PutLogEvents"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                    "",
+                  [
+                      "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                      ":logs:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                      ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                      ":log-group:/aws/lambda/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": "support:*",
+              "Effect": "Allow",
+              "Resource": "*"
+            },
+            {
+              "Action": "servicequotas:GetAWSDefaultServiceQuota",
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "TARefreshScheduleLambdaFunctionServiceRoleDefaultPolicyB0015D14",
+        "Roles": [
+          {
+            "Ref": "TARefreshScheduleLambdaFunctionServiceRole88DF7FDF"
+          }
+        ]
+      },
+      "Metadata": {
+        "cfn_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "W12",
+              "reason": "Lambda needs the following minimum required permissions to send trace data to X-Ray."
+            },
+            {
+              "id": "F4",
+              "reason": "Lambda needs the support * to perform the functions for monitoring resources."
+            }
+          ]
+        }
+      }
+    },
+    "TARefreshScheduleLambdaFunction0F8AE46A": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Join": [
+                "",
+              [
+                  "solutions-",
+                {
+                  "Ref": "AWS::Region"
+                }
+              ]
+            ]
+          },
+          "S3Key": "limit-monitor/v5.3.3/limtr-refresh-service.zip"
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+              "TARefreshScheduleLambdaFunctionServiceRole88DF7FDF",
+              "Arn"
+          ]
+        },
+        "Runtime": "nodejs12.x",
+        "Description": "Serverless Limit Monitor - Lambda function to summarize service limits",
+        "Environment": {
+          "Variables": {
+            "LOG_LEVEL": "INFO",
+            "AWS_SERVICES": {
+              "Fn::FindInMap": [
+                  "EventsMap",
+                  "Checks",
+                  "Services"
+              ]
+            },
+            "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1"
+          }
+        },
+        "Timeout": 300,
+        "TracingConfig": {
+          "Mode": "Active"
+        }
+      },
+      "DependsOn": [
+          "TARefreshScheduleLambdaFunctionServiceRoleDefaultPolicyB0015D14",
+          "TARefreshScheduleLambdaFunctionServiceRole88DF7FDF"
+      ],
+      "Metadata": {
+        "cfn_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "W58",
+              "reason": "Lambda functions has the required permission to write CloudWatch Logs. It uses custom policy instead of arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole with more tighter permissions."
+            }
+          ]
+        }
+      }
+    },
+    "TARefreshScheduleLambdaFunctionLambdaInvokePermission8FC7101E": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+              "TARefreshScheduleLambdaFunction0F8AE46A",
+              "Arn"
+          ]
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+              "TARefreshScheduleEventsRuleB83A00F2",
+              "Arn"
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/TARefreshSchedule/LambdaFunction/LambdaInvokePermission"
+      }
+    },
+    "TARefreshScheduleEventsRuleB83A00F2": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Schedule to refresh TA checks",
+        "ScheduleExpression": {
+          "Fn::FindInMap": [
+              "RefreshRate",
+              "CronSchedule",
+              "Default"
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                  "TARefreshScheduleLambdaFunction0F8AE46A",
+                  "Arn"
+              ]
+            },
+            "Id": "Target0"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/TARefreshSchedule/EventsRule/Resource"
+      }
+    },
+    "LimtrHelperRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                      "logs:CreateLogGroup",
+                      "logs:CreateLogStream",
+                      "logs:PutLogEvents"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                        "",
+                      [
+                          "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                          ":logs:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                          ":",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                          ":log-group:/aws/lambda/*"
+                      ]
+                    ]
+                  }
+                }
+              ],
+              "Version": "2012-10-17"
+            },
+            "PolicyName": "Custom_Limtr_Helper_Permissions"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/LimtrHelperRole/Resource"
+      }
+    },
+    "LimtrHelperFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Join": [
+                "",
+              [
+                  "solutions-",
+                {
+                  "Ref": "AWS::Region"
+                }
+              ]
+            ]
+          },
+          "S3Key": "limit-monitor/v5.3.3/limtr-helper-service.zip"
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+              "LimtrHelperRole",
+              "Arn"
+          ]
+        },
+        "Runtime": "nodejs12.x",
+        "Description": "This function generates UUID, establishes cross account trust on CloudWatch Event Bus and sends anonymous metric",
+        "Environment": {
+          "Variables": {
+            "LOG_LEVEL": "INFO"
+          }
+        },
+        "Timeout": 300
+      },
+      "DependsOn": [
+          "LimtrHelperRole"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/LimtrHelperFunction/Resource"
+      }
+    },
+    "CreateUUID": {
+      "Type": "Custom::UUID",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+              "LimtrHelperFunction",
+              "Arn"
+          ]
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/CreateUUID/Default"
+      }
+    },
+    "DeploymentData": {
+      "Type": "Custom::DeploymentData",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+              "LimtrHelperFunction",
+              "Arn"
+          ]
+        },
+        "SOLUTION": "SO0005s",
+        "UUID": {
+          "Fn::GetAtt": [
+              "CreateUUID",
+              "UUID"
+          ]
+        },
+        "VERSION": "v5.3.3",
+        "ANONYMOUS_DATA": {
+          "Fn::FindInMap": [
+              "MetricsMap",
+              "Send-Data",
+              "SendAnonymousData"
+          ]
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/DeploymentData/Default"
+      }
+    },
+    "limitCheckStack": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/solutions-reference/limit-monitor/v5.3.3/service-quotas-checks.template"
+      },
+      "Metadata": {
+        "aws:cdk:path": "limit-monitor-spoke/limitCheckStack"
+      }
+    },
+    "CDKMetadata": {
+      "Type": "AWS::CDK::Metadata",
+      "Properties": {
+        "Modules": "aws-cdk=1.64.1,@aws-cdk/assets=1.64.1,@aws-cdk/aws-apigateway=1.64.0,@aws-cdk/aws-applicationautoscaling=1.64.1,@aws-cdk/aws-autoscaling-common=1.64.1,@aws-cdk/aws-certificatemanager=1.64.0,@aws-cdk/aws-cloudfront=1.64.0,@aws-cdk/aws-cloudwatch=1.64.1,@aws-cdk/aws-codeguruprofiler=1.64.1,@aws-cdk/aws-cognito=1.64.0,@aws-cdk/aws-dynamodb=1.64.1,@aws-cdk/aws-ec2=1.64.1,@aws-cdk/aws-elasticsearch=1.64.1,@aws-cdk/aws-events=1.64.1,@aws-cdk/aws-iam=1.64.1,@aws-cdk/aws-kinesis=1.64.0,@aws-cdk/aws-kinesisanalytics=1.64.1,@aws-cdk/aws-kms=1.64.1,@aws-cdk/aws-lambda=1.64.1,@aws-cdk/aws-logs=1.64.1,@aws-cdk/aws-s3=1.64.1,@aws-cdk/aws-s3-assets=1.64.1,@aws-cdk/aws-sns=1.64.0,@aws-cdk/aws-sqs=1.64.1,@aws-cdk/aws-ssm=1.64.1,@aws-cdk/aws-stepfunctions=1.64.0,@aws-cdk/cloud-assembly-schema=1.64.1,@aws-cdk/core=1.64.1,@aws-cdk/custom-resources=1.64.0,@aws-cdk/cx-api=1.64.1,@aws-cdk/region-info=1.64.1,@aws-solutions-constructs/aws-events-rule-lambda=1.64.0,@aws-solutions-constructs/aws-events-rule-sns=1.64.0,@aws-solutions-constructs/aws-events-rule-sqs=1.64.0,@aws-solutions-constructs/aws-lambda-dynamodb=1.64.0,@aws-solutions-constructs/core=1.64.0,jsii-runtime=node.js/v12.16.1"
+      },
+      "Condition": "CDKMetadataAvailable"
+    }
+  },
+  "Outputs": {
+    "ServiceChecks": {
+      "Description": "service limit checks monitored in the account",
+      "Value": {
+        "Fn::FindInMap": [
+            "EventsMap",
+            "Checks",
+            "Services"
+        ]
+      }
+    }
+  },
+  "Conditions": {
+    "CDKMetadataAvailable": {
+      "Fn::Or": [
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "ap-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "ap-northeast-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "ap-northeast-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "ap-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "ap-southeast-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "ap-southeast-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "ca-central-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "cn-north-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "cn-northwest-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "eu-central-1"
+              ]
+            }
+          ]
+        },
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "eu-north-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "eu-west-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "eu-west-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "eu-west-3"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "me-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "sa-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "us-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "us-east-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "us-west-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                  "us-west-2"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

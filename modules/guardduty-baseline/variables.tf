@@ -38,3 +38,9 @@ variable "tags" {
     "Terraform" = true
   }
 }
+
+variable "security_account_id" {
+  type = string
+  description = "The delegated AWS account for guardduty"
+  default = "466338271798" # Default value is CATALYST-AWS-SECURITY-PROD
+}

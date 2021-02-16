@@ -5,6 +5,9 @@ data "aws_region" "current" {}
 resource "aws_securityhub_account" "main" {
   count = var.enabled ? 1 : 0
 }
+resource "aws_securityhub_organization_admin_account" "security_account" {
+  admin_account_id = var.security_account_id
+}
 
 # --------------------------------------------------------------------------------------------------
 # Add member accounts

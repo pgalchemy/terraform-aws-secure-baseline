@@ -8,6 +8,7 @@ variable "aws_account_id" {
 
 variable "region" {
   description = "The AWS region in which global resources are set up."
+  default     = "us-east-1"
 }
 
 variable "account_type" {
@@ -385,4 +386,10 @@ variable "securityhub_enable_aws_foundational_standard" {
 variable "analyzer_name" {
   description = "The name for the IAM Access Analyzer resource to be created."
   default     = "default-analyer"
+}
+
+variable "security_account_id" {
+  type = string
+  description = "The delegated AWS account for guardduty & securityhub"
+  default = "466338271798" # Default value is CATALYST-AWS-SECURITY-PROD
 }

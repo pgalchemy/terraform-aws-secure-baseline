@@ -1,0 +1,1390 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudAware IAM Role Stack Template",
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "Access"
+          },
+          "Parameters": [
+            "AccessRoleArn",
+            "AccessRoleName",
+            "AccessExternalId"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Policies"
+          },
+          "Parameters": [
+            "PolicyCloudTrailStatus",
+            "PolicyBillingStatus",
+            "PolicyCloudAwareMonitoringStatus",
+            "PolicyBackupsStatus",
+            "PolicyTaggingStatus",
+            "PolicyInstanceSchedulerStatus",
+            "PolicyEnterpriseLogManagementStatus"
+          ]
+        }
+      ],
+      "ParameterLabels": {
+        "AccessRoleArn": {
+          "default": "CloudAware Role ARN"
+        },
+        "AccessRoleName": {
+          "default": "CloudAware Role Name"
+        },
+        "AccessExternalId": {
+          "default": "External ID"
+        },
+        "PolicyCloudTrailStatus": {
+          "default": "CloudTrail"
+        },
+        "PolicyBillingStatus": {
+          "default": "Billing"
+        },
+        "PolicyCloudAwareMonitoringStatus": {
+          "default": "CloudAware Monitoring"
+        },
+        "PolicyBackupsStatus": {
+          "default": "Backups"
+        },
+        "PolicyTaggingStatus": {
+          "default": "Tagging"
+        },
+        "PolicyInstanceSchedulerStatus": {
+          "default": "Instance Scheduler"
+        },
+        "PolicyEnterpriseLogManagementStatus": {
+          "default": "Enterprise Log Management"
+        }
+      }
+    }
+  },
+  "Parameters": {
+    "AccessRoleArn": {
+      "Type": "String",
+      "Default": "CloudAware.aws",
+      "MinLength": "1",
+      "AllowedValues": [
+        "CloudAware.aws",
+        "CloudAware.aws-us-gov"
+      ],
+      "Description": "CloudAware trusted role ARN"
+    },
+    "AccessRoleName": {
+      "Type": "String",
+      "Default": "auto-generate",
+      "Description": "Role name inside this account"
+    },
+    "AccessExternalId": {
+      "Type": "String"
+    },
+    "PolicyCloudTrailStatus": {
+      "Type": "String",
+      "Default": "Not Available",
+      "MinLength": "1",
+      "AllowedValues": [
+        "Not Available"
+      ],
+      "Description": "No CloudTrail sources found on any account"
+    },
+    "PolicyBillingStatus": {
+      "Type": "String",
+      "Default": "Not Available",
+      "MinLength": "1",
+      "AllowedValues": [
+        "Not Available"
+      ],
+      "Description": "No integrations found on this account"
+    },
+    "PolicyCloudAwareMonitoringStatus": {
+      "Type": "String",
+      "Default": "Disabled",
+      "MinLength": "1",
+      "AllowedValues": [
+        "Enabled",
+        "Disabled"
+      ]
+    },
+    "PolicyBackupsStatus": {
+      "Type": "String",
+      "Default": "Disabled",
+      "MinLength": "1",
+      "AllowedValues": [
+        "Enabled",
+        "Disabled"
+      ]
+    },
+    "PolicyTaggingStatus": {
+      "Type": "String",
+      "Default": "Disabled",
+      "MinLength": "1",
+      "AllowedValues": [
+        "Enabled",
+        "Disabled"
+      ]
+    },
+    "PolicyInstanceSchedulerStatus": {
+      "Type": "String",
+      "Default": "Disabled",
+      "MinLength": "1",
+      "AllowedValues": [
+        "Enabled",
+        "Disabled"
+      ]
+    },
+    "PolicyEnterpriseLogManagementStatus": {
+      "Type": "String",
+      "Default": "Disabled",
+      "MinLength": "1",
+      "AllowedValues": [
+        "Enabled",
+        "Disabled"
+      ]
+    }
+  },
+  "Conditions": {
+    "AccessRoleNameProvided": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "AccessRoleName"
+            },
+            "auto-generate"
+          ]
+        }
+      ]
+    },
+    "PartitionAws": {
+      "Fn::Equals": [
+        {
+          "Ref": "AWS::Partition"
+        },
+        "aws"
+      ]
+    },
+    "PartitionAwsUsGov": {
+      "Fn::Equals": [
+        {
+          "Ref": "AWS::Partition"
+        },
+        "aws-us-gov"
+      ]
+    },
+    "PartitionAwsCn": {
+      "Fn::Equals": [
+        {
+          "Ref": "AWS::Partition"
+        },
+        "aws-cn"
+      ]
+    },
+    "PolicyCloudTrailEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "PolicyCloudTrailStatus"
+        },
+        "Enabled"
+      ]
+    },
+    "PolicyBillingEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "PolicyBillingStatus"
+        },
+        "Enabled"
+      ]
+    },
+    "PolicyCloudAwareMonitoringEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "PolicyCloudAwareMonitoringStatus"
+        },
+        "Enabled"
+      ]
+    },
+    "PolicyBackupsEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "PolicyBackupsStatus"
+        },
+        "Enabled"
+      ]
+    },
+    "PolicyTaggingEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "PolicyTaggingStatus"
+        },
+        "Enabled"
+      ]
+    },
+    "PolicyInstanceSchedulerEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "PolicyInstanceSchedulerStatus"
+        },
+        "Enabled"
+      ]
+    },
+    "PolicyEnterpriseLogManagementEnabled": {
+      "Fn::Equals": [
+        {
+          "Ref": "PolicyEnterpriseLogManagementStatus"
+        },
+        "Enabled"
+      ]
+    }
+  },
+  "Mappings": {
+    "AccessRoleArnMap": {
+      "CloudAware.aws": {
+        "Arn": "arn:aws:iam::814021343637:user/ca-collector"
+      },
+      "CloudAware.aws-us-gov": {
+        "Arn": "arn:aws-us-gov:iam::321683528484:user/cloudaware-collector"
+      }
+    }
+  },
+  "Resources": {
+    "CloudAwareIamRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {
+          "Fn::If": [
+            "AccessRoleNameProvided",
+            {
+              "Ref": "AccessRoleName"
+            },
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::FindInMap": [
+                    "AccessRoleArnMap",
+                    {
+                      "Ref": "AccessRoleArn"
+                    },
+                    "Arn"
+                  ]
+                }
+              },
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": {
+                    "Ref": "AccessExternalId"
+                  }
+                }
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        }
+      }
+    },
+    "CollectorPolicy1": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "ManagedPolicyName": "CloudAwareCollectorPolicy1",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "ec2:Des*",
+                "ec2:G*",
+                "rds:Des*",
+                "rds:ListTagsForResource",
+                "iam:GenerateCredentialReport",
+                "iam:Get*",
+                "iam:L*",
+                "s3:DescribeJob",
+                "s3:GetA*",
+                "s3:GetB*",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetI*",
+                "s3:GetLifecycleConfiguration",
+                "s3:GetMetricsConfiguration",
+                "s3:GetObjectAcl",
+                "s3:GetObjectLegalHold",
+                "s3:GetObjectRetention",
+                "s3:GetObjectTagging",
+                "s3:GetObjectV*",
+                "s3:GetReplicationConfiguration",
+                "s3:HeadBucket",
+                "s3:L*",
+                "sqs:G*",
+                "sqs:L*",
+                "cloudfront:G*",
+                "cloudfront:L*",
+                "elasticmapreduce:Des*",
+                "elasticmapreduce:L*",
+                "elasticmapreduce:ViewEventsFromAllClustersInConsole",
+                "elasticloadbalancing:Des*",
+                "snowball:D*",
+                "snowball:GetJobManifest",
+                "snowball:GetSnowballUsage",
+                "snowball:L*",
+                "sns:G*",
+                "sns:L*",
+                "cloudformation:Des*",
+                "cloudformation:G*",
+                "cloudformation:L*",
+                "route53:G*",
+                "route53:L*",
+                "elasticbeanstalk:Des*",
+                "elasticbeanstalk:L*",
+                "cloudwatch:Des*",
+                "cloudwatch:G*",
+                "cloudwatch:L*",
+                "autoscaling:Des*",
+                "ses:Des*",
+                "ses:G*",
+                "ses:L*",
+                "sts:G*",
+                "dynamodb:Des*",
+                "dynamodb:G*",
+                "dynamodb:L*",
+                "glacier:Des*",
+                "glacier:G*",
+                "glacier:L*",
+                "redshift:Des*",
+                "redshift:G*",
+                "redshift:L*",
+                "redshift:V*",
+                "cloudtrail:DescribeTrails",
+                "cloudtrail:G*",
+                "cloudtrail:L*",
+                "kinesis:Des*",
+                "kinesis:G*",
+                "kinesis:L*",
+                "kinesisanalytics:Des*",
+                "kinesisanalytics:L*",
+                "kinesisvideo:DescribeStream",
+                "kinesisvideo:G*",
+                "kinesisvideo:L*",
+                "ecs:Des*",
+                "ecs:L*",
+                "lambda:G*",
+                "lambda:L*",
+                "machinelearning:Des*",
+                "machinelearning:G*",
+                "kms:Des*",
+                "kms:Get*",
+                "kms:L*",
+                "elasticache:Des*",
+                "elasticache:L*",
+                "iot:Des*",
+                "iot:G*",
+                "iot:L*",
+                "storagegateway:Des*",
+                "storagegateway:L*",
+                "workspaces:Des*",
+                "workspaces:ListAvailableManagementCidrRanges",
+                "support:*",
+                "opsworks:Des*",
+                "opsworks:GetHostnameSuggestion",
+                "opsworks:ListTags",
+                "glue:BatchG*",
+                "glue:G*",
+                "glue:L*",
+                "application-autoscaling:Des*",
+                "apigateway:GET",
+                "apigateway:HEAD",
+                "clouddirectory:G*",
+                "clouddirectory:L*",
+                "pricing:*",
+                "organizations:Des*",
+                "organizations:Li*",
+                "elasticfilesystem:Des*",
+                "ecr:BatchGetImage",
+                "ecr:Des*",
+                "ecr:G*",
+                "ecr:L*",
+                "comprehend:Des*",
+                "comprehend:L*",
+                "mobileanalytics:G*",
+                "crowd:GetTask",
+                "dms:Des*",
+                "dms:ListTagsForResource",
+                "ssm:Des*",
+                "ssm:G*",
+                "ssm:Li*",
+                "sso:Des*",
+                "sso:G*",
+                "sso:L*",
+                "mgh:Des*",
+                "mgh:L*",
+                "artifact:Get",
+                "transcribe:G*",
+                "transcribe:L*",
+                "devicefarm:G*",
+                "devicefarm:L*",
+                "guardduty:G*",
+                "guardduty:L*",
+                "events:Des*",
+                "events:L*",
+                "lex:G*",
+                "ram:G*",
+                "ram:L*",
+                "signer:DescribeSigningJob",
+                "signer:G*",
+                "signer:L*",
+                "mediaconnect:DescribeFlow",
+                "mediaconnect:L*",
+                "sagemaker:Des*",
+                "sagemaker:GetSearchSuggestions",
+                "sagemaker:L*",
+                "mobilehub:DescribeBundle",
+                "mobilehub:Get*",
+                "mobilehub:L*",
+                "resource-groups:G*",
+                "resource-groups:L*",
+                "globalaccelerator:Des*",
+                "globalaccelerator:L*",
+                "serverlessrepo:G*",
+                "serverlessrepo:L*",
+                "sdb:GetAttributes",
+                "sdb:ListDomains",
+                "mediapackage:Des*",
+                "mediapackage:L*",
+                "kafka:Des*",
+                "kafka:GetBootstrapBrokers",
+                "kafka:L*",
+                "sms-voice:GetConfigurationSetEventDestinations",
+                "sms-voice:ListConfigurationSets",
+                "athena:B*",
+                "athena:G*",
+                "athena:L*",
+                "aws-marketplace:De*",
+                "aws-marketplace:ListPrivateMarketplaceProducts",
+                "aws-marketplace:ViewSubscriptions",
+                "mobiletargeting:G*",
+                "mobiletargeting:ListTagsForResource",
+                "sumerian:ViewRelease",
+                "autoscaling-plans:Des*",
+                "autoscaling-plans:GetScalingPlanResourceForecastData",
+                "cur:DescribeReportDefinitions",
+                "shield:Des*",
+                "shield:GetSubscriptionState",
+                "shield:L*",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:G*",
+                "secretsmanager:L*",
+                "route53domains:G*",
+                "route53domains:L*",
+                "route53domains:ViewBilling",
+                "fsx:Des*",
+                "fsx:ListTagsForResource",
+                "amplify:G*",
+                "amplify:L*",
+                "freertos:Des*",
+                "freertos:G*",
+                "freertos:L*",
+                "medialive:Des*",
+                "medialive:L*",
+                "cloudhsm:Des*",
+                "cloudhsm:GetConfig",
+                "cloudhsm:L*",
+                "codedeploy:B*",
+                "codedeploy:G*",
+                "codedeploy:L*",
+                "route53resolver:G*",
+                "route53resolver:L*",
+                "importexport:G*",
+                "importexport:ListJobs",
+                "workmail:Des*",
+                "workmail:G*",
+                "workmail:L*",
+                "datapipeline:Des*",
+                "datapipeline:G*",
+                "datapipeline:ListPipelines",
+                "sms:Get*",
+                "sms:ListApps",
+                "codebuild:BatchG*",
+                "codebuild:L*",
+                "iotanalytics:Des*",
+                "iotanalytics:GetDatasetContent",
+                "iotanalytics:L*",
+                "connect:DescribeInstance",
+                "connect:G*",
+                "connect:ListInstances",
+                "ce:*",
+                "health:*",
+                "gamelift:Des*",
+                "gamelift:G*",
+                "gamelift:L*",
+                "deeplens:B*",
+                "deeplens:G*",
+                "deeplens:L*",
+                "opsworks-cm:Des*",
+                "sso-directory:Des*",
+                "sso-directory:L*",
+                "discovery:Des*",
+                "discovery:GetDiscoverySummary",
+                "discovery:L*",
+                "codecommit:BatchG*",
+                "codecommit:Des*",
+                "codecommit:Ge*",
+                "codecommit:L*",
+                "trustedadvisor:D*",
+                "cognito-idp:Des*",
+                "cognito-idp:Ge*",
+                "cognito-idp:L*",
+                "config:B*",
+                "config:Des*",
+                "config:G*",
+                "config:L*",
+                "swf:Des*",
+                "swf:GetWorkflowExecutionHistory",
+                "swf:L*",
+                "macie:L*",
+                "appsync:Ge*",
+                "appsync:L*",
+                "acm:DescribeCertificate",
+                "acm:GetCertificate",
+                "acm:L*"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "CollectorPolicy2": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "ManagedPolicyName": "CloudAwareCollectorPolicy2",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "xray:BatchGetTraces",
+                "xray:G*",
+                "eks:Des*",
+                "eks:L*",
+                "fms:G*",
+                "fms:L*",
+                "translate:GetTerminology",
+                "translate:ListTerminologies",
+                "aws-portal:V*",
+                "ds:Des*",
+                "ds:G*",
+                "ds:L*",
+                "waf-regional:GetByteMatchSet",
+                "waf-regional:GetChangeTokenStatus",
+                "waf-regional:GetGeoMatchSet",
+                "waf-regional:GetIPSet",
+                "waf-regional:GetLoggingConfiguration",
+                "waf-regional:GetPermissionPolicy",
+                "waf-regional:GetR*",
+                "waf-regional:GetS*",
+                "waf-regional:GetW*",
+                "waf-regional:GetXssMatchSet",
+                "waf-regional:L*",
+                "dax:Des*",
+                "dax:GetItem",
+                "dax:L*",
+                "tag:G*",
+                "logs:Des*",
+                "logs:G*",
+                "logs:L*",
+                "chime:G*",
+                "chime:Li*",
+                "firehose:DescribeDeliveryStream",
+                "firehose:L*",
+                "servicecatalog:Des*",
+                "servicecatalog:GetAWSOrganizationsAccessStatus",
+                "servicecatalog:L*",
+                "servicecatalog:SearchProd*",
+                "mechanicalturk:Ge*",
+                "mq:Des*",
+                "mq:L*",
+                "batch:Des*",
+                "batch:ListJobs",
+                "iotevents:Des*",
+                "iotevents:L*",
+                "es:Des*",
+                "es:G*",
+                "es:L*",
+                "cloud9:Des*",
+                "cloud9:GetUserPublicKey",
+                "cloud9:ListEnvironments",
+                "transfer:Des*",
+                "transfer:L*",
+                "budgets:ViewBudget",
+                "textract:G*",
+                "groundtruthlabeling:DescribeConsoleJob",
+                "groundtruthlabeling:ListDatasetObjects",
+                "cognito-identity:Des*",
+                "cognito-identity:G*",
+                "cognito-identity:L*",
+                "mediastore:Des*",
+                "mediastore:G*",
+                "mediastore:L*",
+                "polly:DescribeVoices",
+                "polly:G*",
+                "polly:L*",
+                "license-manager:G*",
+                "license-manager:L*",
+                "a4b:G*",
+                "a4b:L*",
+                "acm-pca:Des*",
+                "acm-pca:G*",
+                "acm-pca:L*",
+                "iot1click:Des*",
+                "iot1click:G*",
+                "iot1click:L*",
+                "states:Des*",
+                "states:G*",
+                "states:L*",
+                "codepipeline:G*",
+                "codepipeline:L*",
+                "securityhub:Des*",
+                "securityhub:G*",
+                "securityhub:L*",
+                "ec2messages:G*",
+                "greengrass:G*",
+                "greengrass:L*",
+                "servicediscovery:G*",
+                "servicediscovery:L*",
+                "workdocs:Des*",
+                "workdocs:G*",
+                "aws-marketplace-management:v*",
+                "rekognition:Des*",
+                "rekognition:G*",
+                "rekognition:L*",
+                "waf:GetByteMatchSet",
+                "waf:GetChangeTokenStatus",
+                "waf:GetGeoMatchSet",
+                "waf:GetIPSet",
+                "waf:GetLoggingConfiguration",
+                "waf:GetPermissionPolicy",
+                "waf:GetR*",
+                "waf:GetS*",
+                "waf:GetWebACL",
+                "waf:GetXssMatchSet",
+                "waf:L*",
+                "appstream:Des*",
+                "appstream:L*",
+                "quicksight:Des*",
+                "quicksight:G*",
+                "quicksight:L*",
+                "dlm:G*",
+                "wellarchitected:GetWorkload",
+                "wellarchitected:ListWorkloads",
+                "mediaconvert:Des*",
+                "mediaconvert:G*",
+                "mediaconvert:L*",
+                "inspector:Des*",
+                "inspector:GetTelemetryMetadata",
+                "inspector:L*",
+                "lightsail:G*",
+                "robomaker:Des*",
+                "robomaker:L*",
+                "codestar:Des*",
+                "codestar:GetExtendedAccess",
+                "codestar:L*",
+                "cognito-sync:Des*",
+                "cognito-sync:G*",
+                "cognito-sync:L*",
+                "cloudsearch:Des*",
+                "cloudsearch:L*",
+                "directconnect:Des*",
+                "elastictranscoder:L*",
+                "elastictranscoder:R*",
+                "pi:*",
+                "activate:GetMemberInfo",
+                "backup:Des*",
+                "backup:G*",
+                "backup:L*",
+                "worklink:Des*",
+                "worklink:L*",
+                "datasync:Des*",
+                "datasync:L*",
+                "iotsitewise:Des*",
+                "iotsitewise:G*",
+                "iotsitewise:L*",
+                "mediatailor:GetPlaybackConfiguration",
+                "mediatailor:L*",
+                "account:ListRegions",
+                "appmesh:Des*",
+                "appmesh:L*",
+                "managedblockchain:G*",
+                "managedblockchain:L*",
+                "groundstation:DescribeContact",
+                "groundstation:G*",
+                "groundstation:L*",
+                "personalize:Des*",
+                "personalize:G*",
+                "personalize:L*",
+                "applicationinsights:Des*",
+                "applicationinsights:L*",
+                "servicequotas:G*",
+                "servicequotas:L*",
+                "iotthingsgraph:DescribeNamespace",
+                "iotthingsgraph:G*",
+                "iotthingsgraph:L*",
+                "chatbot:Des*",
+                "chatbot:GetSlackOauthParameters",
+                "qldb:Des*",
+                "qldb:G*",
+                "qldb:L*",
+                "aesop:GetQuote",
+                "aesop:L*",
+                "mediapackage-vod:Des*",
+                "mediapackage-vod:L*",
+                "lakeformation:DescribeResource",
+                "lakeformation:Ge*",
+                "lakeformation:L*"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "CloudTrailPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "PolicyCloudTrailEnabled",
+      "Properties": {
+        "PolicyName": "CloudTrailPolicy",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "cloudtrail:DescribeTrails",
+                "cloudtrail:GetTrailStatus",
+                "cloudtrail:LookupEvents",
+                "kms:ListAliases",
+                "s3:GetBucketLocation",
+                "s3:ListAllMyBuckets"
+              ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:ListBucket"
+              ],
+              "Resource": {
+                "Fn::If": [
+                  "PartitionAws",
+                  [
+                    "arn:aws:s3:::YOUR-CLOUDTRAIL-BUCKET"
+                  ],
+                  {
+                    "Fn::If": [
+                      "PartitionAwsUsGov",
+                      [
+                        "arn:aws-us-gov:s3:::YOUR-CLOUDTRAIL-BUCKET"
+                      ],
+                      {
+                        "Fn::If": [
+                          "PartitionAwsCn",
+                          [
+                            "arn:aws-cn:s3:::YOUR-CLOUDTRAIL-BUCKET"
+                          ],
+                          {
+                            "Ref": "AWS::NoValue"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetObject"
+              ],
+              "Resource": {
+                "Fn::If": [
+                  "PartitionAws",
+                  [
+                    "arn:aws:s3:::YOUR-CLOUDTRAIL-BUCKET/LOG-PREFIX/*"
+                  ],
+                  {
+                    "Fn::If": [
+                      "PartitionAwsUsGov",
+                      [
+                        "arn:aws-us-gov:s3:::YOUR-CLOUDTRAIL-BUCKET/LOG-PREFIX/*"
+                      ],
+                      {
+                        "Fn::If": [
+                          "PartitionAwsCn",
+                          [
+                            "arn:aws-cn:s3:::YOUR-CLOUDTRAIL-BUCKET/LOG-PREFIX/*"
+                          ],
+                          {
+                            "Ref": "AWS::NoValue"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "BillingPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "PolicyBillingEnabled",
+      "Properties": {
+        "PolicyName": "BillingPolicy",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetBucketLocation",
+                "s3:ListAllMyBuckets"
+              ],
+              "Resource": [
+                "arn:aws:s3:::*"
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:ListBucket"
+              ],
+              "Resource": [
+                "arn:aws:s3:::YOUR-BILLING-BUCKET"
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetObject"
+              ],
+              "Resource": [
+                "arn:aws:s3:::YOUR-BILLING-BUCKET/*"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "CloudAwareMonitoringPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "PolicyCloudAwareMonitoringEnabled",
+      "Properties": {
+        "PolicyName": "CloudAwareMonitoringPolicy",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "CaMonitoring",
+              "Effect": "Allow",
+              "Action": [
+                "ec2:DescribeInstances",
+                "cloudwatch:List*",
+                "cloudwatch:Get*"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "BackupsPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "PolicyBackupsEnabled",
+      "Properties": {
+        "PolicyName": "BackupsPolicy",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "Ec2Backup",
+              "Effect": "Allow",
+              "Action": [
+                "ec2:DescribeInstances",
+                "ec2:DescribeImages",
+                "ec2:CreateImage",
+                "ec2:DeregisterImage",
+                "ec2:CopyImage",
+                "ec2:DescribeSnapshots",
+                "ec2:DeleteSnapshot",
+                "ec2:CreateTags",
+                "ec2:DeleteTags"
+              ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Sid": "RdsBackup",
+              "Effect": "Allow",
+              "Action": [
+                "rds:DescribeDBInstances",
+                "rds:DescribeDBSnapshots",
+                "rds:CreateDBSnapshot",
+                "rds:DeleteDBSnapshot",
+                "rds:ListTagsForResource",
+                "rds:AddTagsToResource",
+                "rds:RemoveTagsFromResource",
+                "rds:CreateDBClusterSnapshot",
+                "rds:DeleteDBClusterSnapshot",
+                "rds:DescribeDBClusterSnapshots"
+              ],
+              "Resource": [
+                "*"
+              ]
+            },
+            {
+              "Sid": "S3Backup",
+              "Effect": "Allow",
+              "Action": [
+                "s3:ListAllMyBuckets",
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:GetBucketTagging",
+                "s3:PutBucketTagging"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "TaggingPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "PolicyTaggingEnabled",
+      "Properties": {
+        "PolicyName": "TaggingPolicy",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "a4b:ListTags",
+                "a4b:TagResource",
+                "acm-pca:ListTags",
+                "acm-pca:TagCertificateAuthority",
+                "acm:AddTagsToCertificate",
+                "acm:ListTagsForCertificate",
+                "acm:RemoveTagsFromCertificate",
+                "aesop:ListTagsForResource",
+                "aesop:TagResource",
+                "amplify:TagResource",
+                "appmesh:ListTagsForResource",
+                "appmesh:TagResource",
+                "appstream:ListTagsForResource",
+                "appstream:TagResource",
+                "appsync:ListTagsForResource",
+                "appsync:TagResource",
+                "athena:ListTagsForResource",
+                "athena:TagResource",
+                "autoscaling:CreateOrUpdateTags",
+                "autoscaling:DeleteTags",
+                "autoscaling:DescribeTags",
+                "backup:ListTags",
+                "backup:TagResource",
+                "ce:GetTags",
+                "clouddirectory:ListTagsForResource",
+                "clouddirectory:TagResource",
+                "cloudfront:ListTagsForResource",
+                "cloudfront:TagResource",
+                "cloudhsm:AddTagsToResource",
+                "cloudhsm:ListTags*",
+                "cloudhsm:RemoveTagsFromResource",
+                "cloudhsm:TagResource",
+                "cloudsearch:AddTags",
+                "cloudsearch:ListTags",
+                "cloudsearch:RemoveTags",
+                "cloudtrail:AddTags",
+                "cloudtrail:ListTags",
+                "cloudtrail:RemoveTags",
+                "cloudwatch:ListTagsForResource",
+                "cloudwatch:TagResource",
+                "codecommit:ListTagsForResource",
+                "codecommit:TagResource",
+                "codedeploy:AddTagsToOnPremisesInstances",
+                "codedeploy:RemoveTagsFromOnPremisesInstances",
+                "codepipeline:ListTagsForResource",
+                "codepipeline:TagResource",
+                "codestar:ListTagsForProject",
+                "codestar:TagProject",
+                "cognito-identity:ListTagsForResource",
+                "cognito-identity:TagResource",
+                "cognito-idp:ListTagsForResource",
+                "cognito-idp:TagResource",
+                "comprehend:ListTagsForResource",
+                "comprehend:TagResource",
+                "config:GetTagKeys",
+                "config:ListTagsForResource",
+                "config:TagResource",
+                "datapipeline:AddTags",
+                "datapipeline:RemoveTags",
+                "datasync:ListTagsForResource",
+                "datasync:TagResource",
+                "dax:ListTags",
+                "dax:TagResource",
+                "devicefarm:ListTagsForResource",
+                "devicefarm:TagResource",
+                "directconnect:DescribeTags",
+                "directconnect:TagResource",
+                "discovery:CreateTags",
+                "discovery:DeleteTags",
+                "discovery:DescribeTags",
+                "dms:AddTagsToResource",
+                "dms:ListTagsForResource",
+                "dms:RemoveTagsFromResource",
+                "ds:AddTagsToResource",
+                "ds:ListTagsForResource",
+                "ds:RemoveTagsFromResource",
+                "dynamodb:ListTagsOfResource",
+                "dynamodb:TagResource",
+                "ec2:CreateTags",
+                "ec2:DeleteTags",
+                "ec2:DescribeTags",
+                "ecr:ListTagsForResource",
+                "ecr:TagResource",
+                "ecs:ListTagsForResource",
+                "ecs:TagResource",
+                "elasticache:AddTagsToResource",
+                "elasticache:ListTagsForResource",
+                "elasticache:RemoveTagsFromResource",
+                "elasticbeanstalk:AddTags",
+                "elasticbeanstalk:ListTagsForResource",
+                "elasticbeanstalk:RemoveTags",
+                "elasticfilesystem:CreateTags",
+                "elasticfilesystem:DeleteTags",
+                "elasticfilesystem:DescribeTags",
+                "elasticloadbalancing:AddTags",
+                "elasticloadbalancing:DescribeTags",
+                "elasticloadbalancing:RemoveTags",
+                "elasticmapreduce:AddTags",
+                "elasticmapreduce:RemoveTags",
+                "es:AddTags",
+                "es:ListTags",
+                "es:RemoveTags",
+                "events:ListTagsForResource",
+                "events:TagResource",
+                "firehose:ListTagsForDeliveryStream",
+                "firehose:TagDeliveryStream",
+                "fsx:ListTagsForResource",
+                "fsx:TagResource",
+                "glacier:AddTagsToVault",
+                "glacier:ListTagsForVault",
+                "glacier:RemoveTagsFromVault",
+                "glue:GetTags",
+                "glue:TagResource",
+                "greengrass:ListTagsForResource",
+                "greengrass:TagResource",
+                "groundstation:ListTagsForResource",
+                "groundstation:TagResource",
+                "iam:ListRoleTags",
+                "iam:ListUserTags",
+                "iam:Tag*",
+                "inspector:ListTagsForResource",
+                "inspector:SetTagsForResource",
+                "iot1click:ListTagsForResource",
+                "iot1click:TagResource",
+                "iot:ListTagsForResource",
+                "iot:TagResource",
+                "iotanalytics:ListTagsForResource",
+                "iotanalytics:TagResource",
+                "iotevents:ListTagsForResource",
+                "iotevents:TagResource",
+                "iotthingsgraph:ListTagsForResource",
+                "iotthingsgraph:TagResource",
+                "kafka:ListTagsForResource",
+                "kafka:TagResource",
+                "kinesis:AddTagsToStream",
+                "kinesis:ListTagsForStream",
+                "kinesis:RemoveTagsFromStream",
+                "kinesisanalytics:ListTagsForResource",
+                "kinesisanalytics:TagResource",
+                "kinesisvideo:ListTagsForStream",
+                "kinesisvideo:TagStream",
+                "kms:ListResourceTags",
+                "kms:TagResource",
+                "lambda:ListTags",
+                "lambda:TagResource",
+                "license-manager:ListTagsForResource",
+                "license-manager:TagResource",
+                "lightsail:TagResource",
+                "logs:ListTagsLogGroup",
+                "logs:TagLogGroup",
+                "machinelearning:AddTags",
+                "machinelearning:DeleteTags",
+                "machinelearning:DescribeTags",
+                "mediaconvert:ListTagsForResource",
+                "mediaconvert:TagResource",
+                "medialive:CreateTags",
+                "medialive:DeleteTags",
+                "medialive:ListTagsForResource",
+                "mediapackage:ListTagsForResource",
+                "mediapackage:TagResource",
+                "mediatailor:ListTagsForResource",
+                "mediatailor:TagResource",
+                "mobiletargeting:ListTagsForResource",
+                "mobiletargeting:TagResource",
+                "mq:CreateTags",
+                "mq:DeleteTags",
+                "mq:ListTags",
+                "opsworks:ListTags",
+                "opsworks:TagResource",
+                "organizations:ListTagsForResource",
+                "organizations:TagResource",
+                "qldb:ListTagsForResource",
+                "qldb:TagResource",
+                "ram:TagResource",
+                "rds:AddTagsToResource",
+                "rds:ListTagsForResource",
+                "rds:RemoveTagsFromResource",
+                "redshift:CreateTags",
+                "redshift:DeleteTags",
+                "redshift:DescribeTags",
+                "resource-groups:GetTags",
+                "resource-groups:Tag",
+                "robomaker:ListTagsForResource",
+                "robomaker:TagResource",
+                "route53:ChangeTagsForResource",
+                "route53:ListTags*",
+                "route53domains:DeleteTagsForDomain",
+                "route53domains:ListTagsForDomain",
+                "route53domains:UpdateTagsForDomain",
+                "route53resolver:ListTagsForResource",
+                "route53resolver:TagResource",
+                "s3:DeleteObjectTagging",
+                "s3:DeleteObjectVersionTagging",
+                "s3:GetBucketTagging",
+                "s3:GetObjectTagging",
+                "s3:GetObjectVersionTagging",
+                "s3:ListBucketByTags",
+                "s3:PutBucketTagging",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:ReplicateTags",
+                "sagemaker:AddTags",
+                "sagemaker:DeleteTags",
+                "sagemaker:ListTags",
+                "secretsmanager:TagResource",
+                "securityhub:ListTagsForResource",
+                "securityhub:TagResource",
+                "servicecatalog:AssociateTagOptionWithResource",
+                "servicecatalog:CreateTagOption",
+                "servicecatalog:DeleteTagOption",
+                "servicecatalog:DescribeTagOption",
+                "servicecatalog:DisassociateTagOptionFromResource",
+                "servicecatalog:ListResourcesForTagOption",
+                "servicecatalog:ListTagOptions",
+                "servicecatalog:UpdateTagOption",
+                "ses:ListTagsForResource",
+                "ses:TagResource",
+                "sns:ListTagsForResource",
+                "sns:TagResource",
+                "sqs:ListQueueTags",
+                "sqs:TagQueue",
+                "ssm:AddTagsToResource",
+                "ssm:ListTagsForResource",
+                "ssm:RemoveTagsFromResource",
+                "states:ListTagsForResource",
+                "states:TagResource",
+                "storagegateway:AddTagsToResource",
+                "storagegateway:ListTagsForResource",
+                "storagegateway:RemoveTagsFromResource",
+                "tag:GetTag*",
+                "tag:TagResources",
+                "transfer:ListTagsForResource",
+                "transfer:TagResource",
+                "waf-regional:ListTagsForResource",
+                "waf-regional:TagResource",
+                "waf:ListTagsForResource",
+                "waf:TagResource",
+                "workspaces:CreateTags",
+                "workspaces:DeleteTags",
+                "workspaces:DescribeTags"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "InstanceSchedulerPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "PolicyInstanceSchedulerEnabled",
+      "Properties": {
+        "PolicyName": "InstanceSchedulerPolicy",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "CaInstanceScheduler",
+              "Effect": "Allow",
+              "Action": [
+                "ec2:DescribeInstances",
+                "ec2:StartInstances",
+                "ec2:StopInstances",
+                "rds:DescribeDBInstances",
+                "rds:ListTagsForResource",
+                "rds:StartDBInstance",
+                "rds:StopDBInstance"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "EnterpriseLogManagementPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "PolicyEnterpriseLogManagementEnabled",
+      "Properties": {
+        "PolicyName": "EnterpriseLogManagementPolicy",
+        "Roles": [
+          {
+            "Ref": "CloudAwareIamRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "autoscaling:Describe*",
+                "budgets:ViewBudget",
+                "cloudtrail:DescribeTrails",
+                "cloudtrail:GetTrailStatus",
+                "elasticbeanstalk:describe*",
+                "cloudwatch:Describe*",
+                "cloudwatch:Get*",
+                "cloudwatch:List*",
+                "dynamodb:list*",
+                "dynamodb:describe*",
+                "ec2:Describe*",
+                "ec2:Get*",
+                "ecs:Describe*",
+                "ecs:List*",
+                "elasticache:Describe*",
+                "elasticache:List*",
+                "elasticloadbalancing:Describe*",
+                "elasticmapreduce:List*",
+                "elasticmapreduce:Describe*",
+                "elb:describe*",
+                "elbv2:describe*",
+                "elasticloadbalancing:describe*",
+                "es:ListTags",
+                "es:ListDomainNames",
+                "es:DescribeElasticsearchDomains",
+                "kinesis:List*",
+                "kinesis:Describe*",
+                "logs:*",
+                "rds:Describe*",
+                "rds:List*",
+                "route53:List*",
+                "iam:GetUser",
+                "s3:Get*",
+                "s3:List*",
+                "ses:Get*",
+                "sns:List*",
+                "sns:Publish",
+                "sqs:ListQueues",
+                "support:*"
+              ],
+              "Resource": [
+                "*"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "IamRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "CloudAwareIamRole",
+          "Arn"
+        ]
+      }
+    }
+  }
+}
